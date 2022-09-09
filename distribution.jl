@@ -35,10 +35,11 @@ struct PoissonBootstrapExactSampleMedianDistribution <: DiscreteUnivariateDistri
         # Pre-compute the CDFs since there's not a clean formula (to my knowledge)
         cdf = zeros(n)
         # There is a small probability that none of the indexes will be chosen;
-        # to prevent chaos, put this probability into the extreme values
-        sum = 0.5*exp(-n)
+        # to ensure the probabilities add to 1, divide by 1 - exp(-n) (note
+        # that this divisor rounds to 1 in 64-bit floating point for n > 40)
+        sum = 0
         for i in 1:n
-            sum += exact_bessel_dist_prob(i, n)
+            sum += exact_bessel_dist_prob(i, n) / (1 - exp(-n))
             cdf[i] = min(1, sum)
         end
         new(n, cdf)
@@ -73,9 +74,9 @@ struct PoissonBootstrapApproximateSampleMedianDistribution <: DiscreteUnivariate
     cdf::Vector{Float64}
     function PoissonBootstrapApproximateSampleMedianDistribution(n)
         cdf = zeros(n)
-        sum = 0.5*exp(-n)
+        sum = 0
         for i in 1:n
-            sum += approx_bessel_dist_prob(i, n)
+            sum += approx_bessel_dist_prob(i, n) / (1 - exp(-n))
             cdf[i] = min(1, sum)
         end
         new(n, cdf)
